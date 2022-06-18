@@ -33,6 +33,12 @@
 
   <dependencies>
     <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.12</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>com.github.spotbugs</groupId>
       <artifactId>spotbugs-annotations</artifactId>
       <scope>provided</scope>
@@ -151,26 +157,13 @@
       <artifactId>jmockit</artifactId>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter-api</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter-engine</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter-params</artifactId>
-      <scope>test</scope>
-    </dependency>
+    <!--
     <dependency>
       <groupId>org.junit.platform</groupId>
       <artifactId>junit-platform-runner</artifactId>
       <scope>test</scope>
     </dependency>
+    -->
     <dependency>
       <groupId>org.xerial.snappy</groupId>
       <artifactId>snappy-java</artifactId>
@@ -266,19 +259,23 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
+
         <configuration>
           <includes>
             <include>**/*Test.java</include>
           </includes>
-          <forkCount>${surefire-forkcount}</forkCount>
-          <reuseForks>false</reuseForks>
-          <argLine>-Xmx512m -Dtest.junit.threads=${surefire-forkcount} -Dzookeeper.junit.threadid=${surefire.forkNumber} -javaagent:${org.jmockit:jmockit:jar}</argLine>
-          <basedir>${project.basedir}</basedir>
-          <systemPropertyVariables>
-            <build.test.dir>${project.build.directory}/surefire</build.test.dir>
-            <zookeeper.DigestAuthenticationProvider.superDigest>super:D/InIHSb7yEEbrWz8b9l71RjZJU=</zookeeper.DigestAuthenticationProvider.superDigest>
-          </systemPropertyVariables>
         </configuration>
+        <!--
+        <forkCount>${surefire-forkcount}</forkCount>
+        <reuseForks>false</reuseForks>
+        <argLine>-Xmx512m -Dtest.junit.threads=${surefire-forkcount} -Dzookeeper.junit.threadid=${surefire.forkNumber} -javaagent:${org.jmockit:jmockit:jar}</argLine>
+        <basedir>${project.basedir}</basedir>
+        <systemPropertyVariables>
+          <build.test.dir>${project.build.directory}/surefire</build.test.dir>
+          <zookeeper.DigestAuthenticationProvider.superDigest>super:D/InIHSb7yEEbrWz8b9l71RjZJU=</zookeeper.DigestAuthenticationProvider.superDigest>
+        </systemPropertyVariables>
+      </configuration>
+      -->
       </plugin>
 
       <plugin>
