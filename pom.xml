@@ -290,7 +290,7 @@
     <profile>
       <id>coverage</id>
       <activation>
-        <activeByDefault>true</activeByDefault>
+        <activeByDefault>false</activeByDefault>
       </activation>
       <properties>
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/graptests/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>

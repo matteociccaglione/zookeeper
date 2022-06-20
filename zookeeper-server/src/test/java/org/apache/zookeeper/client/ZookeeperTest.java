@@ -47,7 +47,7 @@ public class ZookeeperTest {
             int numConnections = 5000;
             String dataDirectory = System.getProperty("java.io.tmpdir");
 
-            File dir = new File(dataDirectory, "zookeeper").getAbsoluteFile();
+            File dir = new File(dataDirectory, "zookeeper4").getAbsoluteFile();
             ZooKeeperServer server = new ZooKeeperServer(dir, dir, tickTime);
             ServerCnxnFactory standaloneServerFactory = ServerCnxnFactory.createFactory(12345, numConnections);
             int zkPort = standaloneServerFactory.getLocalPort();
@@ -106,8 +106,8 @@ public class ZookeeperTest {
     public void testCreateKeeperExEphemeral() throws InterruptedException, KeeperException {
         Assume.assumeTrue(type == Type.CREATE_KEEPEREF);
         byte[] parentData = {};
-        String pathParent = this.client.create("/ephemeral_parent6",parentData, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
-        this.client.create("/ephemeral_parent6/new_node_fail",this.data,this.acl, this.createMode);
+        String pathParent = this.client.create("/ephemeral_parent3",parentData, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+        this.client.create("/ephemeral_parent3/new_node_fail",this.data,this.acl, this.createMode);
     }
     @Test(expected = IllegalArgumentException.class)
     public void testCreateIllegalArgEx() throws InterruptedException, KeeperException {
@@ -172,5 +172,9 @@ public class ZookeeperTest {
     @AfterClass
     public static void removeServer(){
         server.shutdown();
+        String dataDirectory = System.getProperty("java.io.tmpdir");
+
+        File dir = new File(dataDirectory, "zookeeper4").getAbsoluteFile();
+        dir.delete();
     }
 }
