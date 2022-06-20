@@ -106,8 +106,8 @@ public class ZookeeperTest {
     public void testCreateKeeperExEphemeral() throws InterruptedException, KeeperException {
         Assume.assumeTrue(type == Type.CREATE_KEEPEREF);
         byte[] parentData = {};
-        String pathParent = this.client.create("/ephemeral_parent3",parentData, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
-        this.client.create("/ephemeral_parent3/new_node_fail",this.data,this.acl, this.createMode);
+        String pathParent = this.client.create("/ephemeral_parent23",parentData, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+        this.client.create("/ephemeral_parent23/new_node_fail",this.data,this.acl, this.createMode);
     }
     @Test(expected = IllegalArgumentException.class)
     public void testCreateIllegalArgEx() throws InterruptedException, KeeperException {
