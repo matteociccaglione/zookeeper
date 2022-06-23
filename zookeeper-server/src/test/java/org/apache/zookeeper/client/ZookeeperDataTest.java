@@ -65,7 +65,7 @@ public class ZookeeperDataTest {
             int numConnections = 5000;
             String dataDirectory = System.getProperty("java.io.tmpdir");
 
-            File dir = new File("/home/utente/Scrivania", "zookeeper19").getAbsoluteFile();
+            File dir = new File(dataDirectory, "zookeeper19").getAbsoluteFile();
             cleanDirectory(dir);
             ZooKeeperServer server = new ZooKeeperServer(dir, dir, tickTime);
             ServerCnxnFactory standaloneServerFactory = ServerCnxnFactory.createFactory(12367, numConnections);
@@ -238,7 +238,7 @@ public class ZookeeperDataTest {
             this.factory.shutdown();
             String dataDirectory = System.getProperty("java.io.tmpdir");
 
-            File dir = new File("/home/utente/Scrivania", "zookeeper19").getAbsoluteFile();
+            File dir = new File(dataDirectory, "zookeeper19").getAbsoluteFile();
             dir.delete();
         }catch(Exception e){
 
