@@ -34,6 +34,25 @@ public class ZookeeperACLTest {
         SET_ACL_NONODE,
         SET_ACL_BADVER
     }
+
+    private static void cleanDirectory(File dir){
+        File[] files = dir.listFiles();
+        if(files==null){
+            return;
+        }
+        if(files.length!=0){
+            for (File file: files){
+                if(file.isFile()){
+                    file.delete();
+                }
+                else if (file.isDirectory()){
+                    cleanDirectory(file);
+                }
+            }
+        }
+        dir.delete();
+    }
+
     @BeforeClass
     public static void createServer() throws IOException, InterruptedException {
         try {
@@ -41,11 +60,13 @@ public class ZookeeperACLTest {
             int numConnections = 5000;
             String dataDirectory = System.getProperty("java.io.tmpdir");
 
-            File dir = new File(dataDirectory, "zookeeper14").getAbsoluteFile();
+            File dir = new File(dataDirectory, "zookeeper15").getAbsoluteFile();
+            ZookeeperACLTest.cleanDirectory(dir);
             ZooKeeperServer server = new ZooKeeperServer(dir, dir, tickTime);
             ServerCnxnFactory standaloneServerFactory = ServerCnxnFactory.createFactory(12347, numConnections);
             int zkPort = standaloneServerFactory.getLocalPort();
             standaloneServerFactory.startup(server);
+
             ZookeeperACLTest.server = server;
         }catch(Exception e){
 
@@ -183,7 +204,7 @@ public class ZookeeperACLTest {
         server.shutdown();
         String dataDirectory = System.getProperty("java.io.tmpdir");
 
-        File dir = new File(dataDirectory, "zookeeper14").getAbsoluteFile();
+        File dir = new File(dataDirectory, "zookeeper15").getAbsoluteFile();
         dir.delete();
     }
 }

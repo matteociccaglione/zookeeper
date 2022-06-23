@@ -34,11 +34,30 @@ public class ZookeeperTest {
         CREATE_KEEPEREX,
         CREATE,
         CREATE_ILLEGALARGEX,
+        CREATE_NODEEXISTS,
         CREATE_KEEPEREF,
+        CREATE_BADACL,
         DELETE_KEEPERNONODE,
         DELETE_KEEPERBADVER,
         DELETE_KEEPERNOEMPTY,
         DELETE
+    }
+    private static void cleanDirectory(File dir){
+        File[] files = dir.listFiles();
+        if(files==null){
+            return;
+        }
+        if(files.length!=0){
+            for (File file: files){
+                if(file.isFile()){
+                    file.delete();
+                }
+                else if (file.isDirectory()){
+                    cleanDirectory(file);
+                }
+            }
+        }
+        dir.delete();
     }
     @BeforeClass
     public static void createServer() throws IOException, InterruptedException {
@@ -47,9 +66,10 @@ public class ZookeeperTest {
             int numConnections = 5000;
             String dataDirectory = System.getProperty("java.io.tmpdir");
 
-            File dir = new File(dataDirectory, "zookeeper4").getAbsoluteFile();
+            File dir = new File(dataDirectory, "zookeeper8").getAbsoluteFile();
+            ZookeeperTest.cleanDirectory(dir);
             ZooKeeperServer server = new ZooKeeperServer(dir, dir, tickTime);
-            ServerCnxnFactory standaloneServerFactory = ServerCnxnFactory.createFactory(12345, numConnections);
+            ServerCnxnFactory standaloneServerFactory = ServerCnxnFactory.createFactory(12349, numConnections);
             int zkPort = standaloneServerFactory.getLocalPort();
             port = zkPort;
             standaloneServerFactory.startup(server);
@@ -58,9 +78,8 @@ public class ZookeeperTest {
 
         }
     }
-
-    public ZookeeperTest(String path, byte[] data, List<ACL> acl, CreateMode createMode,Type type, int version) throws IOException {
-        String connection = "127.0.0.1:12345";
+    public ZookeeperTest(String path, byte[] data, ArrayList<ACL> acl, CreateMode createMode,Type type, int version) throws IOException {
+        String connection = "127.0.0.1:12349";
         System.out.println(connection);
         this.client = new ZooKeeper(connection, 2000, event -> {
             //do something with the event processed
@@ -77,17 +96,38 @@ public class ZookeeperTest {
         byte[] data = {};
         return Arrays.asList(new Object[][] {
                 {"/test","2010".getBytes(StandardCharsets.UTF_8),ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, Type.CREATE,0},
-                {"/test3","2010".getBytes(StandardCharsets.UTF_8),ZooDefs.Ids.CREATOR_ALL_ACL,CreateMode.EPHEMERAL,Type.CREATE,0},
-                {"/test2","1010".getBytes(StandardCharsets.UTF_8),ZooDefs.Ids.READ_ACL_UNSAFE,CreateMode.PERSISTENT_SEQUENTIAL,Type.CREATE,0},
+                {"/test3","2010".getBytes(StandardCharsets.UTF_8),new ArrayList<ACL>(),CreateMode.EPHEMERAL,Type.CREATE_BADACL,0},
+                {"/test3","2010".getBytes(StandardCharsets.UTF_8),null,CreateMode.EPHEMERAL,Type.CREATE_BADACL,0},
+                {"/test3",data,new ArrayList<ACL>(),CreateMode.EPHEMERAL,Type.CREATE_BADACL,0},
+                {"/","2010".getBytes(StandardCharsets.UTF_8),ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, Type.CREATE_NODEEXISTS,0},
+
+                {"/test3",data,null,CreateMode.EPHEMERAL,Type.CREATE_BADACL,0},
+                {"/test2",data,ZooDefs.Ids.READ_ACL_UNSAFE,CreateMode.PERSISTENT_SEQUENTIAL,Type.CREATE,0},
                 {"/testfail/no/parent",data,ZooDefs.Ids.OPEN_ACL_UNSAFE,CreateMode.PERSISTENT,Type.CREATE_KEEPEREX,0},
+                {"/testfail/no2/parent","1010".getBytes(StandardCharsets.UTF_8),ZooDefs.Ids.OPEN_ACL_UNSAFE,CreateMode.PERSISTENT,Type.CREATE_KEEPEREX,0},
                 {"\\kestfail/\\ladpath",data,ZooDefs.Ids.OPEN_ACL_UNSAFE,CreateMode.PERSISTENT,Type.CREATE_ILLEGALARGEX,0},
+                {"\\kestfail/\\ladpath","1010".getBytes(StandardCharsets.UTF_8),ZooDefs.Ids.OPEN_ACL_UNSAFE,CreateMode.PERSISTENT,Type.CREATE_ILLEGALARGEX,0},
                 {"/provaeph",data,ZooDefs.Ids.OPEN_ACL_UNSAFE,CreateMode.PERSISTENT,Type.CREATE_KEEPEREF,0},
+                {"/provaeph4","1010".getBytes(StandardCharsets.UTF_8),ZooDefs.Ids.OPEN_ACL_UNSAFE,CreateMode.PERSISTENT,Type.CREATE_KEEPEREF,0},
                 {"/test_no_node",data,ZooDefs.Ids.OPEN_ACL_UNSAFE,CreateMode.PERSISTENT,Type.DELETE_KEEPERNONODE,0},
                 {"/test_bad_version",data,ZooDefs.Ids.OPEN_ACL_UNSAFE,CreateMode.PERSISTENT,Type.DELETE_KEEPERBADVER,2},
                 {"/test_bad_version2",data,ZooDefs.Ids.OPEN_ACL_UNSAFE,CreateMode.PERSISTENT,Type.DELETE_KEEPERBADVER,-2},
                 {"/test_delete",data,ZooDefs.Ids.OPEN_ACL_UNSAFE,CreateMode.PERSISTENT,Type.DELETE,0},
-                {"/test_delete_children",data,ZooDefs.Ids.OPEN_ACL_UNSAFE,CreateMode.PERSISTENT,Type.DELETE_KEEPERNOEMPTY,0}
+                {"/test_delete_children",data,ZooDefs.Ids.OPEN_ACL_UNSAFE,CreateMode.PERSISTENT,Type.DELETE_KEEPERNOEMPTY,0},
+               {"",data,ZooDefs.Ids.OPEN_ACL_UNSAFE,CreateMode.PERSISTENT,Type.CREATE_ILLEGALARGEX,0},
+               {"","1010".getBytes(StandardCharsets.UTF_8),ZooDefs.Ids.OPEN_ACL_UNSAFE,CreateMode.PERSISTENT,Type.CREATE_ILLEGALARGEX,0},
+
         });
+    }
+    @Test(expected = KeeperException.NodeExistsException.class)
+    public void testCreateNodeExists() throws InterruptedException, KeeperException {
+        Assume.assumeTrue(type == Type.CREATE_NODEEXISTS);
+        this.client.create(this.path,this.data,this.acl,this.createMode);
+    }
+    @Test(expected = KeeperException.InvalidACLException.class)
+    public void testCreateBadACL() throws InterruptedException, KeeperException {
+        Assume.assumeTrue(type==Type.CREATE_BADACL);
+        this.client.create(this.path,this.data,this.acl,this.createMode);
     }
     @Test
     public void testCreate() throws InterruptedException, KeeperException {
@@ -100,14 +140,20 @@ public class ZookeeperTest {
     @Test(expected = KeeperException.NoNodeException.class)
     public void testCreateKeeperEx() throws InterruptedException, KeeperException {
         Assume.assumeTrue(type==Type.CREATE_KEEPEREX);
+        System.out.println(this.path+String.valueOf(this.data.length));
         String pathReturned = this.client.create(this.path,this.data, this.acl,this.createMode);
     }
     @Test(expected = KeeperException.NoChildrenForEphemeralsException.class)
     public void testCreateKeeperExEphemeral() throws InterruptedException, KeeperException {
         Assume.assumeTrue(type == Type.CREATE_KEEPEREF);
         byte[] parentData = {};
-        String pathParent = this.client.create("/ephemeral_parent23",parentData, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
-        this.client.create("/ephemeral_parent23/new_node_fail",this.data,this.acl, this.createMode);
+        String pathParent;
+        try {
+            pathParent = this.client.create("/ephemeral_parent1", parentData, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+        }catch(KeeperException.NodeExistsException e){
+            pathParent = "/ephemeral_parent1";
+        }
+        this.client.create(pathParent+this.path,this.data,this.acl, this.createMode);
     }
     @Test(expected = IllegalArgumentException.class)
     public void testCreateIllegalArgEx() throws InterruptedException, KeeperException {
@@ -174,7 +220,7 @@ public class ZookeeperTest {
         server.shutdown();
         String dataDirectory = System.getProperty("java.io.tmpdir");
 
-        File dir = new File(dataDirectory, "zookeeper4").getAbsoluteFile();
+        File dir = new File(dataDirectory, "zookeeper8").getAbsoluteFile();
         dir.delete();
     }
 }

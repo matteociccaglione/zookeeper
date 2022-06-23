@@ -34,8 +34,27 @@ public class ZookeeperDataTest {
         SET_DATA,
         SET_DATA_NONODE,
         SET_DATA_BADVER,
-        EXISTS_ILLEGAL
+        EXISTS_ILLEGAL,
+        SET_DATA_BADARG
     }
+    private static void cleanDirectory(File dir){
+        File[] files = dir.listFiles();
+        if(files==null){
+            return;
+        }
+        if(files.length!=0){
+            for (File file: files){
+                if(file.isFile()){
+                    file.delete();
+                }
+                else if (file.isDirectory()){
+                    cleanDirectory(file);
+                }
+            }
+        }
+        dir.delete();
+    }
+
     @BeforeClass
     public static void createServer() throws IOException, InterruptedException {
         try {
@@ -44,6 +63,7 @@ public class ZookeeperDataTest {
             String dataDirectory = System.getProperty("java.io.tmpdir");
 
             File dir = new File("/home/utente/Scrivania", "zookeeper3").getAbsoluteFile();
+            cleanDirectory(dir);
             ZooKeeperServer server = new ZooKeeperServer(dir, dir, tickTime);
             ServerCnxnFactory standaloneServerFactory = ServerCnxnFactory.createFactory(12346, numConnections);
             int zkPort = standaloneServerFactory.getLocalPort();
@@ -71,6 +91,7 @@ public class ZookeeperDataTest {
     public static Collection configure() {
         byte[] data = {};
         return Arrays.asList(new Object[][]{
+                {"/",false,null,"1010".getBytes(StandardCharsets.UTF_8),-1,Type.EXISTS},
                 {"/test_exists",false,null,"1010".getBytes(StandardCharsets.UTF_8),-1,Type.EXISTS},
                 {"/test_exists2",true,null,"1010".getBytes(StandardCharsets.UTF_8),-1,Type.EXISTS},
                 {"/test_illegal",true,null,data,-1,Type.EXISTS_ILLEGAL},
@@ -80,10 +101,15 @@ public class ZookeeperDataTest {
                 {"/test_setdata_nonod",false,null,"101010".getBytes(StandardCharsets.UTF_8),0,Type.SET_DATA_NONODE},
                 {"/test_getdata",false,new Stat(),"100".getBytes(StandardCharsets.UTF_8),0,Type.GET_DATA},
                 {"/test_getdata2",true,null,"1010".getBytes(StandardCharsets.UTF_8),0,Type.GET_DATA},
+                {"/",true,new Stat(),"1010".getBytes(StandardCharsets.UTF_8),0,Type.SET_DATA},
                 {"/test_getdata_nonod",false,null,data,0,Type.GET_DATA_NONODE}
         });
     }
-
+    @Test(expected = KeeperException.BadArgumentsException.class)
+    public void testSetDataBadArg() throws InterruptedException, KeeperException {
+        Assume.assumeTrue(type==Type.SET_DATA_BADARG);
+        this.client.setData(this.path,this.data,this.version);
+    }
     @Test
     public void testExists()throws KeeperException,InterruptedException{
         Assume.assumeTrue(type==Type.EXISTS);
