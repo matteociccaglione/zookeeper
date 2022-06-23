@@ -153,6 +153,12 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>org.pitest</groupId>
+      <artifactId>pitest-maven</artifactId>
+      <version>1.8.0</version>
+      <type>maven-plugin</type>
+    </dependency>
+    <dependency>
       <groupId>org.jmockit</groupId>
       <artifactId>jmockit</artifactId>
       <scope>test</scope>
@@ -177,7 +183,37 @@
   </dependencies>
 
   <profiles>
-
+    <profile>
+      <id>pit</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.pitest</groupId>
+            <artifactId>pitest-maven</artifactId>
+            <version>1.8.0</version>
+            <configuration>
+              <targetClasses>
+                <param>org.apache.zookeeper.ZooKeeper</param>
+              </targetClasses>
+              <targetTests>
+                <param>org.apache.zookeeper.client.ZookeeperDataTest</param>
+                <param>org.apache.zookeeper.client.ZookeeperACLTest</param>
+                <param>org.apache.zookeeper.client.ZookeeperTest</param>
+              </targetTests>
+            </configuration>
+            <executions>
+              <execution>
+                <id>Mutation Report</id>
+                <phase>test-compile</phase>
+                <goals>
+                  <goal>mutationCoverage</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
     <profile>
       <id>ba-dua</id>
       <properties>
@@ -306,6 +342,7 @@
           </execution>
         </executions>
       </plugin>
+
       <plugin>
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>

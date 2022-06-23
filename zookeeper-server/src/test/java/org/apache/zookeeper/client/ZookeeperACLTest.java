@@ -24,6 +24,7 @@ public class ZookeeperACLTest {
     private int aclVersion;
     private ZooKeeper client;
     public static ZooKeeperServer server;
+    private ServerCnxnFactory factory;
     private Type type;
     enum Type{
         GET_ACL,
@@ -53,8 +54,8 @@ public class ZookeeperACLTest {
         dir.delete();
     }
 
-    @BeforeClass
-    public static void createServer() throws IOException, InterruptedException {
+    @Before
+    public void createServer() throws IOException, InterruptedException {
         try {
             int tickTime = 2000;
             int numConnections = 5000;
@@ -66,18 +67,19 @@ public class ZookeeperACLTest {
             ServerCnxnFactory standaloneServerFactory = ServerCnxnFactory.createFactory(12347, numConnections);
             int zkPort = standaloneServerFactory.getLocalPort();
             standaloneServerFactory.startup(server);
-
+            this.factory=standaloneServerFactory;
             ZookeeperACLTest.server = server;
+            String connection = "127.0.0.1:12347";
+            System.out.println(connection);
+            this.client = new ZooKeeper(connection, 2000, event -> {
+                //do something with the event processed
+            });
         }catch(Exception e){
 
         }
     }
     public ZookeeperACLTest(String path, boolean watch, ArrayList<ACL> acl, int aclVersion, Type type) throws IOException {
-        String connection = "127.0.0.1:12347";
-        System.out.println(connection);
-        this.client = new ZooKeeper(connection, 2000, event -> {
-            //do something with the event processed
-        });
+
         this.path = path;
         this.watch = watch;
         this.acl = acl;
@@ -199,9 +201,10 @@ public class ZookeeperACLTest {
         this.client.setACL(this.path,this.acl,this.aclVersion);
     }
 
-    @AfterClass
-    public static void removeServer(){
-        server.shutdown();
+    @After
+    public void removeServer() throws InterruptedException {
+        this.client.close();
+        this.factory.shutdown();
         String dataDirectory = System.getProperty("java.io.tmpdir");
 
         File dir = new File(dataDirectory, "zookeeper15").getAbsoluteFile();

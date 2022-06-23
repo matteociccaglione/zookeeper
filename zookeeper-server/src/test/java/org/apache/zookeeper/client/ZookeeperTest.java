@@ -30,6 +30,7 @@ public class ZookeeperTest {
     private static int port;
     private Type type;
     private int version;
+    private ServerCnxnFactory factory;
     private enum Type{
         CREATE_KEEPEREX,
         CREATE,
@@ -59,8 +60,8 @@ public class ZookeeperTest {
         }
         dir.delete();
     }
-    @BeforeClass
-    public static void createServer() throws IOException, InterruptedException {
+    @Before
+    public void createServer() throws IOException, InterruptedException {
         try {
             int tickTime = 2000;
             int numConnections = 5000;
@@ -73,17 +74,19 @@ public class ZookeeperTest {
             int zkPort = standaloneServerFactory.getLocalPort();
             port = zkPort;
             standaloneServerFactory.startup(server);
+            this.factory=standaloneServerFactory;
             ZookeeperTest.server = server;
+            String connection = "127.0.0.1:12349";
+            System.out.println(connection);
+            this.client = new ZooKeeper(connection, 2000, event -> {
+                //do something with the event processed
+            });
         }catch(Exception e){
 
         }
     }
     public ZookeeperTest(String path, byte[] data, ArrayList<ACL> acl, CreateMode createMode,Type type, int version) throws IOException {
-        String connection = "127.0.0.1:12349";
-        System.out.println(connection);
-        this.client = new ZooKeeper(connection, 2000, event -> {
-            //do something with the event processed
-        });
+
         this.path = path;
         this.data = data;
         this.acl = acl;
@@ -215,9 +218,10 @@ public class ZookeeperTest {
         Assert.assertTrue(nodeStat==null);
     }
 
-    @AfterClass
-    public static void removeServer(){
-        server.shutdown();
+    @After
+    public void removeServer() throws InterruptedException {
+        this.client.close();
+        this.factory.shutdown();
         String dataDirectory = System.getProperty("java.io.tmpdir");
 
         File dir = new File(dataDirectory, "zookeeper8").getAbsoluteFile();
