@@ -20,17 +20,13 @@ import java.util.Collection;
 import java.util.List;
 
 @RunWith(Parameterized.class)
-public class ZookeeperTest {
+public class ZookeeperTest extends ZookeeperTestBaseClass{
     private String path;
     private byte[] data;
     private List<ACL> acl;
     private CreateMode createMode;
-    private ZooKeeper client;
-    private static ZooKeeperServer server;
-    private static int port;
     private Type type;
     private int version;
-    private ServerCnxnFactory factory;
     private enum Type{
         CREATE_KEEPEREX,
         CREATE,
@@ -41,52 +37,13 @@ public class ZookeeperTest {
         DELETE_KEEPERNONODE,
         DELETE_KEEPERBADVER,
         DELETE_KEEPERNOEMPTY,
-        DELETE
-    }
-    private static void cleanDirectory(File dir){
-        File[] files = dir.listFiles();
-        if(files==null){
-            return;
-        }
-        if(files.length!=0){
-            for (File file: files){
-                if(file.isFile()){
-                    file.delete();
-                }
-                else if (file.isDirectory()){
-                    cleanDirectory(file);
-                }
-            }
-        }
-        dir.delete();
-    }
-    @Before
-    public void createServer() throws IOException, InterruptedException {
-        try {
-            int tickTime = 2000;
-            int numConnections = 5000;
-            String dataDirectory = System.getProperty("java.io.tmpdir");
-
-            File dir = new File(dataDirectory, "zookeeper8").getAbsoluteFile();
-            ZookeeperTest.cleanDirectory(dir);
-            ZooKeeperServer server = new ZooKeeperServer(dir, dir, tickTime);
-            ServerCnxnFactory standaloneServerFactory = ServerCnxnFactory.createFactory(12349, numConnections);
-            int zkPort = standaloneServerFactory.getLocalPort();
-            port = zkPort;
-            standaloneServerFactory.startup(server);
-            this.factory=standaloneServerFactory;
-            ZookeeperTest.server = server;
-            String connection = "127.0.0.1:12349";
-            System.out.println(connection);
-            this.client = new ZooKeeper(connection, 2000, event -> {
-                //do something with the event processed
-            });
-        }catch(Exception e){
-
-        }
+        DELETE,
+        GET_EPHEMERALS,
+        GET_EPHEMERALS_PREFIX
     }
     public ZookeeperTest(String path, byte[] data, ArrayList<ACL> acl, CreateMode createMode,Type type, int version) throws IOException {
-
+        this.directoryName = "zookeeper8";
+        this.portNumber = 12349;
         this.path = path;
         this.data = data;
         this.acl = acl;
@@ -119,6 +76,11 @@ public class ZookeeperTest {
                 {"/test_delete_children",data,ZooDefs.Ids.OPEN_ACL_UNSAFE,CreateMode.PERSISTENT,Type.DELETE_KEEPERNOEMPTY,0},
                {"",data,ZooDefs.Ids.OPEN_ACL_UNSAFE,CreateMode.PERSISTENT,Type.CREATE_ILLEGALARGEX,0},
                {"","1010".getBytes(StandardCharsets.UTF_8),ZooDefs.Ids.OPEN_ACL_UNSAFE,CreateMode.PERSISTENT,Type.CREATE_ILLEGALARGEX,0},
+                {"","1010".getBytes(StandardCharsets.UTF_8),ZooDefs.Ids.OPEN_ACL_UNSAFE,CreateMode.PERSISTENT,Type.GET_EPHEMERALS,0},
+                {"/","1010".getBytes(StandardCharsets.UTF_8),ZooDefs.Ids.OPEN_ACL_UNSAFE,CreateMode.PERSISTENT,Type.GET_EPHEMERALS_PREFIX,0},
+                {"/test_eph_from_prefix","1010".getBytes(StandardCharsets.UTF_8),ZooDefs.Ids.OPEN_ACL_UNSAFE,CreateMode.PERSISTENT,Type.GET_EPHEMERALS_PREFIX,0}
+
+
 
         });
     }
@@ -218,13 +180,60 @@ public class ZookeeperTest {
         Assert.assertTrue(nodeStat==null);
     }
 
-    @After
-    public void removeServer() throws InterruptedException {
-        this.client.close();
-        this.factory.shutdown();
-        String dataDirectory = System.getProperty("java.io.tmpdir");
+    @Test
+    public void getEphemerals() throws InterruptedException, KeeperException {
+        Assume.assumeTrue(type == Type.GET_EPHEMERALS);
+        List<String> ephemerals = new ArrayList<>();
+        ephemerals.add("/eph1");
+        ephemerals.add("/eph2");
+        for (String name : ephemerals){
+            this.client.create(name,"test".getBytes(StandardCharsets.UTF_8),ZooDefs.Ids.OPEN_ACL_UNSAFE,CreateMode.EPHEMERAL);
 
-        File dir = new File(dataDirectory, "zookeeper8").getAbsoluteFile();
-        dir.delete();
+        }
+        List<String> returned = this.client.getEphemerals();
+        boolean isCorrect = true;
+        for (String name: ephemerals){
+            if (!returned.contains(name)){
+                isCorrect=false;
+                break;
+            }
+        }
+        Assert.assertTrue(isCorrect);
     }
+    @Test
+    public void getEphemeralsPrefix() throws InterruptedException, KeeperException {
+        Assume.assumeTrue(type==Type.GET_EPHEMERALS_PREFIX);
+        boolean wasRoot=false;
+        if(!this.path.equals("/")){
+            this.client.create(this.path,"test".getBytes(StandardCharsets.UTF_8),ZooDefs.Ids.OPEN_ACL_UNSAFE,CreateMode.PERSISTENT);
+        }
+        else{
+            this.path="";
+            wasRoot=true;
+        }
+        String badEph = "/eph3";
+        this.client.create(this.path+"/eph1","1010".getBytes(StandardCharsets.UTF_8),ZooDefs.Ids.OPEN_ACL_UNSAFE,CreateMode.EPHEMERAL);
+        this.client.create(this.path+"/eph2","1010".getBytes(StandardCharsets.UTF_8),ZooDefs.Ids.OPEN_ACL_UNSAFE,CreateMode.EPHEMERAL);
+        if(this.path.equals(badEph)){
+            badEph = "/eph4";
+        }
+        this.client.create(badEph,"1010".getBytes(StandardCharsets.UTF_8),ZooDefs.Ids.OPEN_ACL_UNSAFE,CreateMode.EPHEMERAL);
+        List<String> names = new ArrayList<>();
+        names.add(this.path+"/eph1");
+        names.add(this.path+"/eph2");
+        names.add(badEph);
+        if(wasRoot){
+            this.path="/";
+        }
+        List<String> returned = this.client.getEphemerals(this.path);
+        boolean isCorrect = returned.contains(names.get(0)) && returned.contains(names.get(1));
+        if(!wasRoot){
+            isCorrect = isCorrect && !returned.contains(badEph);
+        }
+        else{
+            isCorrect = isCorrect && returned.contains(badEph);
+        }
+        Assert.assertTrue(isCorrect);
+    }
+
 }

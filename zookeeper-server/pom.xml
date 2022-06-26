@@ -194,11 +194,15 @@
             <configuration>
               <targetClasses>
                 <param>org.apache.zookeeper.ZooKeeper</param>
+                <param>org.apache.zookeeper.server.auth.DigestAuthenticationProvider</param>
               </targetClasses>
               <targetTests>
                 <param>org.apache.zookeeper.client.ZookeeperDataTest</param>
                 <param>org.apache.zookeeper.client.ZookeeperACLTest</param>
                 <param>org.apache.zookeeper.client.ZookeeperTest</param>
+                <param>org.apache.zookeeper.client.ZookeeperWatcherTest</param>
+                <param>org.apache.zookeeper.client.ZookeeperAuthTest</param>
+                <param>org.apache.zookeeper.server.auth.DigestAuthenticationProviderTest</param>
               </targetTests>
             </configuration>
             <executions>

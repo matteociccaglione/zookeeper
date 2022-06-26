@@ -18,17 +18,13 @@ import java.util.Arrays;
 import java.util.Collection;
 
 @RunWith(Parameterized.class)
-public class ZookeeperDataTest {
+public class ZookeeperDataTest extends ZookeeperTestBaseClass{
     private String path;
     private boolean watch;
     private Stat stat;
     private byte[] data;
     private int version;
     private Type type;
-    private static ZooKeeperServer server;
-    private ZooKeeper client;
-    private ServerCnxnFactory factory;
-    private int portIncrement = 0;
     enum Type{
         EXISTS,
         GET_DATA,
@@ -39,52 +35,10 @@ public class ZookeeperDataTest {
         EXISTS_ILLEGAL,
         SET_DATA_BADARG
     }
-    private static void cleanDirectory(File dir){
-        File[] files = dir.listFiles();
-        if(files==null){
-            return;
-        }
-        if(files.length!=0){
-            for (File file: files){
-                if(file.isFile()){
-                    file.delete();
-                }
-                else if (file.isDirectory()){
-                    cleanDirectory(file);
-                }
-            }
-        }
-        dir.delete();
-    }
 
-    @Before
-    public void createServer() throws IOException, InterruptedException {
-            this.client=null;
-            System.out.println("Before method");
-            int tickTime = 2000;
-            int numConnections = 5000;
-            String dataDirectory = System.getProperty("java.io.tmpdir");
-
-            File dir = new File(dataDirectory, "zookeeper19").getAbsoluteFile();
-            cleanDirectory(dir);
-            ZooKeeperServer server = new ZooKeeperServer(dir, dir, tickTime);
-            ServerCnxnFactory standaloneServerFactory = ServerCnxnFactory.createFactory(12367, numConnections);
-            System.out.println("Factory created");
-            int zkPort = standaloneServerFactory.getLocalPort();
-            standaloneServerFactory.startup(server);
-            System.out.println("Server startup");
-            ZookeeperDataTest.server = server;
-            this.factory = standaloneServerFactory;
-            String connection = "127.0.0.1:"+String.valueOf(12367);
-            portIncrement+=1;
-            System.out.println(connection);
-                this.client = new ZooKeeper(connection, 2000, event -> {
-                    //do something with the event processed
-                });
-
-    }
     public ZookeeperDataTest(String path, boolean watch, Stat stat, byte[] data, int version, Type type) throws IOException, InterruptedException {
-
+        this.directoryName = "zookeeper19";
+        this.portNumber = 12367;
         this.path = path;
         this.watch = watch;
         this.stat = stat;
@@ -230,18 +184,4 @@ public class ZookeeperDataTest {
         this.client.getData(this.path,this.watch,this.stat);
     }
 
-    @After
-    public void removeServer(){
-        System.out.println("After method");
-        try {
-            this.client.close();
-            this.factory.shutdown();
-            String dataDirectory = System.getProperty("java.io.tmpdir");
-
-            File dir = new File(dataDirectory, "zookeeper19").getAbsoluteFile();
-            dir.delete();
-        }catch(Exception e){
-
-        }
-    }
 }

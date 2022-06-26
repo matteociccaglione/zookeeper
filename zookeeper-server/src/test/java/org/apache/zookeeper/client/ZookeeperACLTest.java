@@ -17,14 +17,11 @@ import java.util.Collection;
 import java.util.List;
 
 @RunWith(Parameterized.class)
-public class ZookeeperACLTest {
+public class ZookeeperACLTest extends ZookeeperTestBaseClass{
     private String path;
     private boolean watch;
     private List<ACL> acl;
     private int aclVersion;
-    private ZooKeeper client;
-    public static ZooKeeperServer server;
-    private ServerCnxnFactory factory;
     private Type type;
     enum Type{
         GET_ACL,
@@ -36,50 +33,9 @@ public class ZookeeperACLTest {
         SET_ACL_BADVER
     }
 
-    private static void cleanDirectory(File dir){
-        File[] files = dir.listFiles();
-        if(files==null){
-            return;
-        }
-        if(files.length!=0){
-            for (File file: files){
-                if(file.isFile()){
-                    file.delete();
-                }
-                else if (file.isDirectory()){
-                    cleanDirectory(file);
-                }
-            }
-        }
-        dir.delete();
-    }
-
-    @Before
-    public void createServer() throws IOException, InterruptedException {
-        try {
-            int tickTime = 2000;
-            int numConnections = 5000;
-            String dataDirectory = System.getProperty("java.io.tmpdir");
-
-            File dir = new File(dataDirectory, "zookeeper15").getAbsoluteFile();
-            ZookeeperACLTest.cleanDirectory(dir);
-            ZooKeeperServer server = new ZooKeeperServer(dir, dir, tickTime);
-            ServerCnxnFactory standaloneServerFactory = ServerCnxnFactory.createFactory(12347, numConnections);
-            int zkPort = standaloneServerFactory.getLocalPort();
-            standaloneServerFactory.startup(server);
-            this.factory=standaloneServerFactory;
-            ZookeeperACLTest.server = server;
-            String connection = "127.0.0.1:12347";
-            System.out.println(connection);
-            this.client = new ZooKeeper(connection, 2000, event -> {
-                //do something with the event processed
-            });
-        }catch(Exception e){
-
-        }
-    }
     public ZookeeperACLTest(String path, boolean watch, ArrayList<ACL> acl, int aclVersion, Type type) throws IOException {
-
+        this.directoryName = "zookeeper15";
+        this.portNumber = 12347;
         this.path = path;
         this.watch = watch;
         this.acl = acl;
@@ -201,13 +157,4 @@ public class ZookeeperACLTest {
         this.client.setACL(this.path,this.acl,this.aclVersion);
     }
 
-    @After
-    public void removeServer() throws InterruptedException {
-        this.client.close();
-        this.factory.shutdown();
-        String dataDirectory = System.getProperty("java.io.tmpdir");
-
-        File dir = new File(dataDirectory, "zookeeper15").getAbsoluteFile();
-        dir.delete();
-    }
 }
