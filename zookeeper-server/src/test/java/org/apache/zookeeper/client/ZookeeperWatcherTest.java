@@ -53,12 +53,16 @@ public class ZookeeperWatcherTest extends ZookeeperTestBaseClass{
                 {"/testRemove",AddWatchMode.PERSISTENT,Type.REMOVE_WATCHER,Watcher.WatcherType.Any,true},
                 {"/testRemove",AddWatchMode.PERSISTENT,Type.REMOVE_WATCHER,Watcher.WatcherType.Data,false},
                 {"/testRemove",AddWatchMode.PERSISTENT,Type.REMOVE_WATCHER,Watcher.WatcherType.Data,true},
+                {"/testRemove",AddWatchMode.PERSISTENT,Type.REMOVE_WATCHER,Watcher.WatcherType.Children,false},
+                {"/testRemove",AddWatchMode.PERSISTENT,Type.REMOVE_WATCHER,Watcher.WatcherType.Children,true},
                 {"/testRemoveNoWatch",AddWatchMode.PERSISTENT,Type.REMOVE_WATCHER_EX,Watcher.WatcherType.Any,false},
                 {"/testRemoveNoWatch",AddWatchMode.PERSISTENT,Type.REMOVE_WATCHER_EX,Watcher.WatcherType.Any,true},
                 {"/testRemoveWatches",AddWatchMode.PERSISTENT,Type.REMOVE_ALL_WATCHER,Watcher.WatcherType.Any,false},
                 {"/testRemoveWatches",AddWatchMode.PERSISTENT,Type.REMOVE_ALL_WATCHER,Watcher.WatcherType.Any,true},
                 {"/testRemoveWatches",AddWatchMode.PERSISTENT,Type.REMOVE_ALL_WATCHER,Watcher.WatcherType.Data,false},
                 {"/testRemoveWatches",AddWatchMode.PERSISTENT,Type.REMOVE_ALL_WATCHER,Watcher.WatcherType.Data,true},
+                {"/testRemoveWatches",AddWatchMode.PERSISTENT,Type.REMOVE_ALL_WATCHER,Watcher.WatcherType.Children,false},
+                {"/testRemoveWatches",AddWatchMode.PERSISTENT,Type.REMOVE_ALL_WATCHER,Watcher.WatcherType.Children,true},
                 {"/testRemoveNoWatch",AddWatchMode.PERSISTENT,Type.REMOVE_ALL_WATCHER_EX,Watcher.WatcherType.Any,true},
 
 
@@ -119,6 +123,13 @@ public class ZookeeperWatcherTest extends ZookeeperTestBaseClass{
             this.client.setData(this.basePath,"newdata".getBytes(StandardCharsets.UTF_8),0);
             isCorrect = this.watcher.events.isEmpty();
         }
+        if(this.watcherType == Watcher.WatcherType.Children){
+            Stat stat = new Stat();
+            this.client.getChildren(this.basePath,this.watcher,stat);
+            this.client.removeWatches(this.basePath,this.watcher,this.watcherType,this.local);
+            this.client.setData(this.basePath,"newdata".getBytes(StandardCharsets.UTF_8),0);
+            isCorrect = this.watcher.events.isEmpty();
+        }
         Assert.assertTrue(isCorrect);
     }
 
@@ -155,6 +166,14 @@ public class ZookeeperWatcherTest extends ZookeeperTestBaseClass{
             Stat stat = new Stat();
             this.client.getData(this.basePath,watcher1,stat);
             this.client.getData(this.basePath,watcher2,stat);
+            this.client.removeAllWatches(this.basePath,this.watcherType,this.local);
+            this.client.setData(this.basePath,"newData".getBytes(StandardCharsets.UTF_8),0);
+            isCorrect = watcher1.events.isEmpty() && watcher2.events.isEmpty();
+        }
+        if(this.watcherType==Watcher.WatcherType.Children){
+            Stat stat = new Stat();
+            this.client.getChildren(this.basePath,watcher1,stat);
+            this.client.getChildren(this.basePath,watcher2,stat);
             this.client.removeAllWatches(this.basePath,this.watcherType,this.local);
             this.client.setData(this.basePath,"newData".getBytes(StandardCharsets.UTF_8),0);
             isCorrect = watcher1.events.isEmpty() && watcher2.events.isEmpty();

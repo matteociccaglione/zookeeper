@@ -224,6 +224,7 @@ public class ZookeeperTest extends ZookeeperTestBaseClass{
         names.add(badEph);
         if(wasRoot){
             this.path="/";
+
         }
         List<String> returned = this.client.getEphemerals(this.path);
         boolean isCorrect = returned.contains(names.get(0)) && returned.contains(names.get(1));
