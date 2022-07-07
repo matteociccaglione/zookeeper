@@ -38,7 +38,7 @@ jobs:
           key: ${{ runner.os }}-sonar
           restore-keys: ${{ runner.os }}-sonar
       - name: Build with Maven
-        run: mvn  -Pcoverage -B   verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=matteociccaglione_zookeeper -Dsonar.organization=matteociccaglione -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=$SONAR_TOKEN
+        run: mvn  -Pcoverage verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=matteociccaglione_zookeeper -Dsonar.organization=matteociccaglione -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=$SONAR_TOKEN
         env:
           GITHUB_TOKEN: ${{ secrets.G_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
