@@ -177,8 +177,9 @@ public class ZookeeperTest extends ZookeeperTestBaseClass{
         }
         this.client.delete(this.path,this.version);
         Stat nodeStat = this.client.exists(this.path,false);
-        Assert.assertTrue(nodeStat==null);
+        Assert.assertNull(nodeStat);
     }
+
 
     @Test
     public void getEphemerals() throws InterruptedException, KeeperException {
@@ -200,6 +201,7 @@ public class ZookeeperTest extends ZookeeperTestBaseClass{
         }
         Assert.assertTrue(isCorrect);
     }
+
     @Test
     public void getEphemeralsPrefix() throws InterruptedException, KeeperException {
         Assume.assumeTrue(type==Type.GET_EPHEMERALS_PREFIX);

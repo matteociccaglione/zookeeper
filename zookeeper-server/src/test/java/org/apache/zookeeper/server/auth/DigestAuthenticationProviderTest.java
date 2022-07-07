@@ -57,10 +57,13 @@ public class DigestAuthenticationProviderTest {
                 {"testinvalid",Type.TEST_IS_NV,""},
                 {"",Type.TEST_IS_NV,""},
                 {null,Type.TEST_IS_V_NP,""},
+                /*
                 {"user:pass",Type.TEST_GETUSER,"user"},
                 {"user:pass",Type.TEST_MATCH,"user:pass"},
                 {"",Type.TEST_NOMATCH,"test"},
                 {"",Type.TEST_GETUSERFAIL,"user"},
+                */
+
         });
     }
 
@@ -115,7 +118,7 @@ public class DigestAuthenticationProviderTest {
         KeeperException.Code code = this.provider.handleAuthentication(cnxnTest,this.stringToHash.getBytes(StandardCharsets.UTF_8));
         client.close();
         standaloneServerFactory.shutdown();
-        Assert.assertEquals(code,KeeperException.Code.OK);
+        Assert.assertEquals(KeeperException.Code.OK,code);
     }
 
     @Test

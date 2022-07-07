@@ -155,7 +155,7 @@ public class ZookeeperDataTest extends ZookeeperTestBaseClass{
     }
 
     @Test
-    public void getData() throws InterruptedException, KeeperException {
+    public void testGetData() throws InterruptedException, KeeperException {
         Assume.assumeTrue(type == Type.GET_DATA);
 
 

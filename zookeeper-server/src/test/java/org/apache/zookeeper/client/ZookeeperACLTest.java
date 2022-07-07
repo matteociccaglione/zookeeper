@@ -3,6 +3,7 @@ package org.apache.zookeeper.client;
 
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.junit.*;
@@ -64,7 +65,7 @@ public class ZookeeperACLTest extends ZookeeperTestBaseClass{
         Assume.assumeTrue(type == Type.GET_ACL);
         byte[] data = {};
         this.client.create(this.path,data, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        List< ACL> acls = this.client.getACL(this.path,null);
+        List< ACL> acls = this.client.getACL(this.path,new Stat());
         boolean areEquals = acls.size()==ZooDefs.Ids.OPEN_ACL_UNSAFE.size();
         for (int i = 0; i < acls.size(); i++){
             if(!acls.get(i).equals(ZooDefs.Ids.OPEN_ACL_UNSAFE.get(i))){
@@ -78,7 +79,7 @@ public class ZookeeperACLTest extends ZookeeperTestBaseClass{
     @Test(expected = KeeperException.NoNodeException.class)
     public void testGetACLNoNode() throws InterruptedException, KeeperException {
         Assume.assumeTrue(type == Type.GET_ACL_NONODE);
-        this.client.getACL(this.path,null);
+        this.client.getACL(this.path,new Stat());
     }
 
     @Test(expected = KeeperException.NoNodeException.class)
